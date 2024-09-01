@@ -1,0 +1,5 @@
+#define SSID "your-ssid"
+#define PASS "your-password"
+#define CHANNEL_ID
+#define WRITE_KEY
+#define READ_KEY
