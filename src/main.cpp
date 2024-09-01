@@ -5,7 +5,7 @@
 #include <Adafruit_BME280.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-#include "local_setting.h"
+#include "env.h"
 #include "Ambient.h"
 
 Adafruit_BME280 bme; // BME280オブジェクトを作成
