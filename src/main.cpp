@@ -13,9 +13,27 @@ Ambient ambient;
 WiFiClient client;
 const char* ssid = SSID;
 const char* password = PASS;
-const char* writeKey = WRITE_KEY;
-int channelId = CHANNEL_ID;
+long pastTime;
+bool display;
 
+#define INTERVAL_SEC 60 // 送信間隔(秒)
+
+/**
+ * 環境データ
+ */
+struct envData {
+  float temperature;
+  float humidity;
+  float pressure;
+};
+
+void getEnv(envData *env);
+void showEnv(envData env);
+void pushEnv(envData env);
+
+/**
+ * セットアップ
+ */
 void setup() {
   M5.begin();
   M5.Lcd.setTextSize(2);
@@ -35,32 +53,68 @@ void setup() {
     Serial.println("BME280の初期化に失敗しました");
     while (1);
   }
-  ambient.begin(channelId, writeKey, &client); 
+  ambient.begin(CHANNEL_ID, WRITE_KEY, &client); 
+  pastTime = millis();
+  display = true;
+  envData env;
+  getEnv(&env);
+  pushEnv(env);
 }
 
+/**
+ * ループ
+*/
 void loop() {
-  float temperature = bme.readTemperature();
-  float humidity = bme.readHumidity();
-  float pressure = bme.readPressure() / 100.0F;
-  
-  M5.Lcd.setCursor(0, 30);
+  envData env;
+  M5.update();
+  getEnv(&env);
+  if (M5.BtnA.isPressed()) {
+    display = !display;
+  }
+  if (display) {
+    showEnv(env);
+  } else {
+    M5.Lcd.clear();
+  }
+  long now = millis();
+  if (now > pastTime + INTERVAL_SEC * 1000) {
+    pushEnv(env);
+    pastTime = now;
+  }
+}
+
+void getEnv(envData *env) {
+  env->temperature = bme.readTemperature();
+  env->humidity = bme.readHumidity();
+  env->pressure = bme.readPressure() / 100.0F;
+}
+
+/**
+ * センサーデータを表示
+ */
+void showEnv(envData env) {
+  M5.Lcd.setCursor(0, 0);
+  M5.Lcd.println("Press A to switch display");
   // センサーデータを出力
   M5.Lcd.print("Temperature = ");
-  M5.Lcd.print(temperature);
+  M5.Lcd.print(env.temperature);
   M5.Lcd.println(" *C");
-  
+      
   M5.Lcd.print("Humidity = ");
-  M5.Lcd.print(humidity);
+  M5.Lcd.print(env.humidity);
   M5.Lcd.println(" %");
 
   M5.Lcd.print("Pressure = ");
-  M5.Lcd.print(pressure);
+  M5.Lcd.print(env.pressure);
   M5.Lcd.println(" hPa");
+}
 
-  // Ambientにデータを送信 
-  ambient.set(1, temperature); // 温度をデータ1にセット
-  ambient.set(2, humidity); // 湿度をデータ2にセット
-  ambient.set(3, pressure); // 気圧をデータ3にセット
+/**
+ * センサーデータをAmbientに送信
+ */
+void pushEnv(envData env) {
+  ambient.set(1, env.temperature); // 温度をデータ1にセット
+  ambient.set(2, env.humidity); // 湿度をデータ2にセット
+  ambient.set(3, env.pressure); // 気圧をデータ3にセット
   ambient.send(); // データをAmbientに送信
-  delay(60000);
 }
