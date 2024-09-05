@@ -1,0 +1,2 @@
+# EnvironmentalSensor
+M5StackとBME280で温度・湿度・気圧を取得してM5Stackのディスプレイでの表示とAmbientにデータを送るプログラムです。
