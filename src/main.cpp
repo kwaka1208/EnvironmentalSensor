@@ -62,13 +62,14 @@ void setup() {
 }
 
 /**
- * ループ
+ * メインループ
 */
 void loop() {
   envData env;
   M5.update();
   getEnv(&env);
-  if (M5.BtnA.isPressed()) {
+  if (M5.BtnA.wasReleasefor(50)) {
+    // 50ms押したら切り替える。これぐらいの方が誤操作が少ない。
     display = !display;
   }
   if (display) {
